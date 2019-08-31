@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	_ "net/http/pprof"
@@ -74,42 +75,89 @@ func main() {
 			continue
 		}
 		for _, orderedItem := range orderedCollection.OrderedItems {
-			fmt.Printf("%s: %s: %s\n", orderedItem.ID, orderedItem.Object.Type, orderedItem.Object.ID)
+			// fmt.Printf("%s: %s: %s\n", orderedItem.ID, orderedItem.Object.Type, orderedItem.Object.ID)
 
 			if len(orderedItem.Object.ID) > 0 {
-				object, objErr := streamReader.GetObject(orderedItem.Object.ID)
-				if objErr != nil {
-					log.WithError(objErr).Errorf("error reading object in %+v", orderedItem)
-					time.Sleep(1)
+				_object, _jsonb, err := streamReader.GetTypedObject(orderedItem.Object.ID)
+				if err != nil {
+					log.WithError(err).Errorf("error reading '%+v'", orderedItem.Object)
 					continue
 				}
-				fmt.Printf("  %s\n", object.Type)
-				for _, identifiedBy := range object.IdentifiedBy {
-					switch identifiedBy.RawContent[0] {
-					case '"':
-						{
-							var value string
-							if err := json.Unmarshal(identifiedBy.RawContent, &value); err != nil {
-								log.WithError(err).Errorf("error unmarshaling '%s', to string", string(identifiedBy.RawContent))
-								continue
-							}
-							fmt.Printf("    %s, %s, ", identifiedBy.Type, value)
+
+				switch _object.Type {
+				case "Person":
+					{
+						object, objErr := streamReader.HydratePerson(_jsonb)
+						if objErr != nil {
+							log.WithError(objErr).Errorf("error reading object in %+v", orderedItem)
+							time.Sleep(1)
+							continue
 						}
-					default:
-						{
-							var value int
-							if err := json.Unmarshal(identifiedBy.RawContent, &value); err != nil {
-								log.WithError(err).Errorf("error unmarshaling '%s', to int", string(identifiedBy.RawContent))
-								continue
-							}
-							fmt.Printf("    %s, %d, ", identifiedBy.Type, value)
-						}
+						fmt.Printf("%s : %s\n", object.Type, object.ID)
+						resolveIdentifiedBy(&object.IdentifiedBy)
 					}
-					fmt.Printf("%s\n", identifiedBy.Label)
+				case "Group":
+					{
+						object, objErr := streamReader.HydrateGroup(_jsonb)
+						if objErr != nil {
+							log.WithError(objErr).Errorf("error reading object in %+v", orderedItem)
+							time.Sleep(1)
+							continue
+						}
+						fmt.Printf("%s : %s\n", object.Type, object.ID)
+						resolveIdentifiedBy(&object.IdentifiedBy)
+					}
+				case "HumanMadeObject":
+					{
+						object, objErr := streamReader.HydrateHumanMadeObject(_jsonb)
+						if objErr != nil {
+							log.WithError(objErr).Errorf("error reading object in %+v", orderedItem)
+							time.Sleep(1)
+							continue
+						}
+						fmt.Printf("%s : %s\n", object.Type, object.ID)
+						resolveIdentifiedBy(&object.IdentifiedBy)
+						fmt.Print("\n")
+					}
+				default:
+					{
+						fmt.Printf("%s : %s\n", _object.Type, _object.ID)
+						resolveIdentifiedBy(&_object.IdentifiedBy)
+					}
 				}
 			}
 		}
 		url = orderedCollection.Next.ID
+	}
+}
+
+func resolveIdentifiedBy(identifiedByArray *[]models.Identifier) {
+	for i, _ := range *identifiedByArray {
+		_identifiedBy := &(*identifiedByArray)[i]
+
+		switch _identifiedBy.RawContent[0] {
+		case '"':
+			{
+				var value string
+				if err := json.Unmarshal(_identifiedBy.RawContent, &value); err != nil {
+					log.WithError(err).Errorf("error unmarshaling '%s', to string", string(_identifiedBy.RawContent))
+					continue
+				}
+				_identifiedBy.Content = value
+				fmt.Printf("    %s, %s, ", _identifiedBy.Type, value)
+			}
+		default:
+			{
+				var value int
+				if err := json.Unmarshal(_identifiedBy.RawContent, &value); err != nil {
+					log.WithError(err).Errorf("error unmarshaling '%s', to int", string(_identifiedBy.RawContent))
+					continue
+				}
+				_identifiedBy.Content = strconv.Itoa(value)
+				fmt.Printf("    %s, %d, ", _identifiedBy.Type, value)
+			}
+		}
+		fmt.Printf("%s\n", _identifiedBy.Label)
 	}
 }
 

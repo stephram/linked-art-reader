@@ -57,6 +57,26 @@ type Object struct {
 	IdentifiedBy []Identifier `json:"identified_by,omitempty"`
 }
 
+type LinguisticObject struct {
+	ID           string `json:"id"`
+	Type         string `json:"type"`
+	Label        string `json:"_label,omitempty"`
+	Format       string `json:"format,omitempty"`
+	ClassifiedAs []Type `json:"classified_as,omitempty"`
+}
+
+type InformationObject struct {
+	ID     string   `json:"id"`
+	Type   string   `json:"type"`
+	Format []string `json:"format,omitempty"`
+}
+
+type Type struct {
+	ID    string `json:"id"`
+	Type  string `json:"type"`
+	Label string `json:"_label,omitempty"`
+}
+
 type Identifier struct {
 	ID         string          `json:"id"`
 	Type       string          `json:"type,omitempty"`
@@ -66,10 +86,26 @@ type Identifier struct {
 }
 
 type Person struct {
+	ID           string       `json:"id"`
+	Type         string       `json:"type"`
+	IdentifiedBy []Identifier `json:"identified_by,omitempty"`
 }
 
 type Group struct {
+	ID           string       `json:"id"`
+	Type         string       `json:"type"`
+	IdentifiedBy []Identifier `json:"identified_by,omitempty"`
 }
 
 type HumanMadeObject struct {
+	ID            string             `json:"id"`
+	Type          string             `json:"type"`
+	Label         string             `json:"_label,omitempty"`
+	IdentifiedBy  []Identifier       `json:"identified_by,omitempty"`
+	ClassifiedAs  []Type             `json:"classified_as,omitempty"`
+	ReferredToBy  []LinguisticObject `json:"referred_to_by,omitempty"`
+	CurrentKeeper []Object           `json:"current_keeper,omitempty"`
+	CurrentOwner  []Object           `json:"current_owner,omitempty"`
+	RawSubjectOf  json.RawMessage    `json:"subject_of",omitempty`
+	SubjectOf     []Object           `json:"-"`
 }

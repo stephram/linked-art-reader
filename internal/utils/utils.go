@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	log.SetReportCaller(false)
+	log.SetReportCaller(true)
 
 	switch fmt := os.Getenv("LOG_FORMAT"); fmt {
 	case "text":
