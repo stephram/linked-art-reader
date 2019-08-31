@@ -1,0 +1,17 @@
+SubmissionQueue:
+  Type: "AWS::SQS::Queue"
+  Properties:
+    DelaySeconds: 0
+    QueueName:
+      Fn::Sub: "${TagProduct}-${TagEnvironment}-${TagEnvironmentNumber}-lar-inbound"
+    RedrivePolicy:
+      deadLetterTargetArn:
+        Fn::GetAtt:
+          - "SubmissionDeadLetterQueue"
+          - "Arn"
+      maxReceiveCount: 10
+SubmissionDeadLetterQueue:
+  Type: "AWS::SQS::Queue"
+  Properties:
+    QueueName:
+      Fn::Sub: "${TagProduct}-${TagEnvironment}-${TagEnvironmentNumber}-lar-inbound-dlq"
