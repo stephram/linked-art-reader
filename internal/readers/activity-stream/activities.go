@@ -81,24 +81,3 @@ func (r *activityStreamReader) GetObject(id string) (*models.Object, error) {
 	}
 	return &object, err
 }
-
-// func (r *activityStreamReader) GetPage(pageID *string) (*models.ActivityStreamPage, error) {
-// 	r.endpoint.Path = fmt.Sprintf("activity-stream/%s", *pageID)
-func (r *activityStreamReader) GetPage() (*models.OrderedCollectionPage, error) {
-	res, err := http.Get(r.endpoint.String())
-	if err != nil {
-		return nil, err
-	}
-
-	var asp models.OrderedCollectionPage
-
-	jbs, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := json.Unmarshal(jbs, &asp); err != nil {
-		return nil, err
-	}
-	return &asp, nil
-}
