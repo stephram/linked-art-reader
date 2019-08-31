@@ -64,7 +64,9 @@ func main() {
 	log.Infof("%T : %+v", orderedCollection, orderedCollection)
 	processPageParams(stPage, enPage, orderedCollection)
 
-	for url := orderedCollection.First.ID; url != ""; {
+	baseURL := fmt.Sprintf("%s/page/%d", endpoint.String(), *stPage)
+
+	for url := baseURL; url != ""; {
 		orderedCollection, err = streamReader.GetOrderedCollection(url)
 		if err != nil {
 			log.WithError(err).Errorf("error reading orderedCollection '%s'", url)

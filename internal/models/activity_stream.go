@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -28,7 +29,10 @@ type OrderedCollectionPage struct {
 
 func (p *OrderedCollectionPage) GetID() int {
 	ss := strings.Split(p.ID, "/")
-	pg := ss[len(ss)]
+	if len(ss) == 0 {
+		panic(fmt.Sprint("invalid ID '%s'", p.ID))
+	}
+	pg := ss[len(ss)-1]
 
 	val, err := strconv.Atoi(pg)
 	if err != nil {
