@@ -93,8 +93,8 @@ func main() {
 							time.Sleep(1)
 							continue
 						}
-						fmt.Printf("%s : %s\n", object.Type, object.ID)
 						resolveIdentifiedBy(&object.IdentifiedBy)
+						displayObject(object)
 					}
 				case "Group":
 					{
@@ -104,8 +104,8 @@ func main() {
 							time.Sleep(1)
 							continue
 						}
-						fmt.Printf("%s : %s\n", object.Type, object.ID)
 						resolveIdentifiedBy(&object.IdentifiedBy)
+						displayObject(object)
 					}
 				case "HumanMadeObject":
 					{
@@ -115,20 +115,26 @@ func main() {
 							time.Sleep(1)
 							continue
 						}
-						fmt.Printf("%s : %s\n", object.Type, object.ID)
 						resolveIdentifiedBy(&object.IdentifiedBy)
-						fmt.Print("\n")
+						resolveClassifiedAs(&object.ClassifiedAs)
+						resolveReferredToBy(&object.ReferredToBy)
+						displayObject(object)
 					}
 				default:
 					{
-						fmt.Printf("%s : %s\n", _object.Type, _object.ID)
 						resolveIdentifiedBy(&_object.IdentifiedBy)
+						displayObject(_object)
 					}
 				}
 			}
 		}
 		url = orderedCollection.Next.ID
 	}
+}
+
+func displayObject(object interface{}) {
+	js, _ := json.MarshalIndent(object, "", "\t")
+	fmt.Printf("%s", string(js))
 }
 
 func resolveIdentifiedBy(identifiedByArray *[]models.Identifier) {
@@ -144,7 +150,6 @@ func resolveIdentifiedBy(identifiedByArray *[]models.Identifier) {
 					continue
 				}
 				_identifiedBy.Content = value
-				fmt.Printf("    %s, %s, ", _identifiedBy.Type, value)
 			}
 		default:
 			{
@@ -154,11 +159,22 @@ func resolveIdentifiedBy(identifiedByArray *[]models.Identifier) {
 					continue
 				}
 				_identifiedBy.Content = strconv.Itoa(value)
-				fmt.Printf("    %s, %d, ", _identifiedBy.Type, value)
 			}
 		}
-		fmt.Printf("%s\n", _identifiedBy.Label)
 	}
+}
+
+func resolveReferredToBy(referredToByArray *[]models.LinguisticObject) {
+	for i, _ := range *referredToByArray {
+		_referredToBy := &(*referredToByArray)[i]
+		resolveClassifiedAs(&_referredToBy.ClassifiedAs)
+	}
+}
+
+func resolveClassifiedAs(classifiedAsArray *[]models.Type) {
+	// for i, _ := range *classifiedAsArray {
+	// 	// _classifiedAs := &(*classifiedAsArray)[i]
+	// }
 }
 
 func processPageParams(stPage *int, enPage *int, orderedCollection *models.OrderedCollection) (int, int) {

@@ -61,6 +61,7 @@ type LinguisticObject struct {
 	ID           string `json:"id"`
 	Type         string `json:"type"`
 	Label        string `json:"_label,omitempty"`
+	Content      string `json:"content,omitempty"`
 	Format       string `json:"format,omitempty"`
 	ClassifiedAs []Type `json:"classified_as,omitempty"`
 }
@@ -69,6 +70,12 @@ type InformationObject struct {
 	ID     string   `json:"id"`
 	Type   string   `json:"type"`
 	Format []string `json:"format,omitempty"`
+}
+
+type Place struct {
+	ID    string `json:"id"`
+	Type  string `json:"type,omitempty"`
+	Label string `json:"_label,omitempty"`
 }
 
 type Type struct {
@@ -98,14 +105,16 @@ type Group struct {
 }
 
 type HumanMadeObject struct {
-	ID            string             `json:"id"`
-	Type          string             `json:"type"`
-	Label         string             `json:"_label,omitempty"`
-	IdentifiedBy  []Identifier       `json:"identified_by,omitempty"`
-	ClassifiedAs  []Type             `json:"classified_as,omitempty"`
-	ReferredToBy  []LinguisticObject `json:"referred_to_by,omitempty"`
-	CurrentKeeper []Object           `json:"current_keeper,omitempty"`
-	CurrentOwner  []Object           `json:"current_owner,omitempty"`
-	RawSubjectOf  json.RawMessage    `json:"subject_of",omitempty`
-	SubjectOf     []Object           `json:"-"`
+	ID              string             `json:"id"`
+	Type            string             `json:"type"`
+	Label           string             `json:"_label,omitempty"`
+	IdentifiedBy    []Identifier       `json:"identified_by,omitempty"`
+	ClassifiedAs    []Type             `json:"classified_as,omitempty"`
+	ReferredToBy    []LinguisticObject `json:"referred_to_by,omitempty"`
+	CurrentKeeper   []Object           `json:"current_keeper,omitempty"`
+	CurrentOwner    []Object           `json:"current_owner,omitempty"`
+	CurrentLocation Place              `json:"current_location,omitempty"`
+	RawSubjectOf    json.RawMessage    `json:"subject_of",omitempty`
+	SubjectOf       []Object           `json:"-"`
+	Reperesentation []Object           `json:"representation,omitempty"`
 }
