@@ -94,7 +94,7 @@ func main() {
 							continue
 						}
 						resolveIdentifiedBy(&object.IdentifiedBy)
-						displayObject(object)
+						// displayObject(object)
 					}
 				case "Group":
 					{
@@ -105,7 +105,7 @@ func main() {
 							continue
 						}
 						resolveIdentifiedBy(&object.IdentifiedBy)
-						displayObject(object)
+						// displayObject(object)
 					}
 				case "HumanMadeObject":
 					{
@@ -118,7 +118,8 @@ func main() {
 						resolveIdentifiedBy(&object.IdentifiedBy)
 						resolveClassifiedAs(&object.ClassifiedAs)
 						resolveReferredToBy(&object.ReferredToBy)
-						displayObject(object)
+						// displayObject(object)
+						displayObject(createEntity(object))
 					}
 				default:
 					{
@@ -130,6 +131,10 @@ func main() {
 		}
 		url = orderedCollection.Next.ID
 	}
+}
+
+func createEntity(humanMadeObject *models.HumanMadeObject) models.Entity {
+	return models.New(humanMadeObject)
 }
 
 func displayObject(object interface{}) {
