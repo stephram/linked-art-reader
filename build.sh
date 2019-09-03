@@ -1,3 +1,5 @@
 #!/bin/bash
 
-go build -o main cmd/linked-art-reader/main.go
+go build -o reader cmd/reader/main.go
+go build -o importer cmd/importer/main.go
+

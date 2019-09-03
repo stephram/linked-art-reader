@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"linkedart-reader-golang/internal/models"
-	activity_stream "linkedart-reader-golang/internal/readers/activity-stream"
-	"linkedart-reader-golang/internal/utils"
+	"linked-art-reader/internal/models"
+	activity_stream "linked-art-reader/internal/readers/activity-stream"
+	"linked-art-reader/internal/utils"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,6 +25,7 @@ var (
 	asHost *string
 	asPath *string
 	asSche *string
+	pretty *bool
 )
 
 func init() {
@@ -35,6 +36,7 @@ func main() {
 	enProf = flag.Bool("prof", false, "enable the pprof package. Listening on port 8080")
 	stPage = flag.Int("start", 1, "start at page")
 	enPage = flag.Int("end", -1, "stop at page")
+	pretty = flag.Bool("pretty", false, "pretty print JSON output")
 	asHost = flag.String("host", "mart.getty.edu", "activity stream host")
 	asPath = flag.String("path", "activity-stream", "path to the activity stream")
 	asSche = flag.String("scheme", "http", "http(s)")
@@ -64,6 +66,7 @@ func main() {
 	}
 	log.Infof("%T : %+v", orderedCollection, orderedCollection)
 	processPageParams(stPage, enPage, orderedCollection)
+	log.Infof("pages %d - %d", *stPage, *enPage)
 
 	baseURL := fmt.Sprintf("%s/page/%d", endpoint.String(), *stPage)
 
@@ -75,71 +78,31 @@ func main() {
 			continue
 		}
 		for _, orderedItem := range orderedCollection.OrderedItems {
-			// fmt.Printf("%s: %s: %s\n", orderedItem.ID, orderedItem.Object.Type, orderedItem.Object.ID)
-
 			if len(orderedItem.Object.ID) > 0 {
-				_object, _jsonb, err := streamReader.GetTypedObject(orderedItem.Object.ID)
+				_object, _jsonb, err := streamReader.GetTMSObject(orderedItem.Object.ID)
 				if err != nil {
 					log.WithError(err).Errorf("error reading '%+v'", orderedItem.Object)
 					continue
 				}
+				resolveIdentifiedBy(&_object.IdentifiedBy)
+				resolveClassifiedAs(&_object.ClassifiedAs)
+				resolveReferredToBy(&_object.ReferredToBy)
 
-				switch _object.Type {
-				case "Person":
-					{
-						object, objErr := streamReader.HydratePerson(_jsonb)
-						if objErr != nil {
-							log.WithError(objErr).Errorf("error reading object in %+v", orderedItem)
-							time.Sleep(1)
-							continue
-						}
-						resolveIdentifiedBy(&object.IdentifiedBy)
-						// displayObject(object)
-					}
-				case "Group":
-					{
-						object, objErr := streamReader.HydrateGroup(_jsonb)
-						if objErr != nil {
-							log.WithError(objErr).Errorf("error reading object in %+v", orderedItem)
-							time.Sleep(1)
-							continue
-						}
-						resolveIdentifiedBy(&object.IdentifiedBy)
-						// displayObject(object)
-					}
-				case "HumanMadeObject":
-					{
-						object, objErr := streamReader.HydrateHumanMadeObject(_jsonb)
-						if objErr != nil {
-							log.WithError(objErr).Errorf("error reading object in %+v", orderedItem)
-							time.Sleep(1)
-							continue
-						}
-						resolveIdentifiedBy(&object.IdentifiedBy)
-						resolveClassifiedAs(&object.ClassifiedAs)
-						resolveReferredToBy(&object.ReferredToBy)
-						// displayObject(object)
-						displayObject(createEntity(object))
-					}
-				default:
-					{
-						resolveIdentifiedBy(&_object.IdentifiedBy)
-						displayObject(_object)
-					}
+				entity := models.New(_object, _jsonb)
+				if *pretty {
+					fmt.Printf("%s\n", utils.ConvertToPrettyJSON(entity))
+					continue
 				}
+				fmt.Printf("%s\n", utils.ConvertToJSON(entity))
 			}
+		}
+		nextPage := orderedCollection.Next.GetID()
+		if nextPage < 0 || nextPage >= *enPage {
+			url = ""
+			continue
 		}
 		url = orderedCollection.Next.ID
 	}
-}
-
-func createEntity(humanMadeObject *models.HumanMadeObject) models.Entity {
-	return models.New(humanMadeObject)
-}
-
-func displayObject(object interface{}) {
-	js, _ := json.MarshalIndent(object, "", "\t")
-	fmt.Printf("%s", string(js))
 }
 
 func resolveIdentifiedBy(identifiedByArray *[]models.Identifier) {

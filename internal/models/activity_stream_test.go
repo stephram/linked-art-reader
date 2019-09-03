@@ -2,7 +2,7 @@ package models
 
 import (
 	"encoding/json"
-	"linkedart-reader-golang/internal/utils"
+	"linked-art-reader/internal/utils"
 	"os"
 	"testing"
 

@@ -52,9 +52,8 @@ type OrderedItem struct {
 }
 
 type Object struct {
-	ID           string       `json:"id"`
-	Type         string       `json:"type"`
-	IdentifiedBy []Identifier `json:"identified_by,omitempty"`
+	ID   string `json:"id"`
+	Type string `json:"type"`
 }
 
 type LinguisticObject struct {
@@ -92,29 +91,57 @@ type Identifier struct {
 	Content    string          `json:"-"`
 }
 
+type TMSObjectIf interface {
+	GetID() string
+	GetType() string
+	GetIdentifiedBy() []Identifier
+	GetClassifiedAs() []Type
+	GetReferredToBy() []LinguisticObject
+}
+
+type TMSObject struct {
+	ID           string             `json:"id"`
+	Type         string             `json:"type"`
+	IdentifiedBy []Identifier       `json:"identified_by,omitempty"`
+	ClassifiedAs []Type             `json:"classified_as,omitempty"`
+	ReferredToBy []LinguisticObject `json:"referred_to_by,omitempty"`
+}
+
+func (t *TMSObject) GetID() string {
+	return t.ID
+}
+
+func (t *TMSObject) GetType() string {
+	return t.Type
+}
+
+func (t *TMSObject) GetIdentifiedBy() []Identifier {
+	return t.IdentifiedBy
+}
+
+func (t *TMSObject) GetClassifiedAs() []Type {
+	return t.ClassifiedAs
+}
+
+func (t *TMSObject) GetReferredToBy() []LinguisticObject {
+	return t.ReferredToBy
+}
+
 type Person struct {
-	ID           string       `json:"id"`
-	Type         string       `json:"type"`
-	IdentifiedBy []Identifier `json:"identified_by,omitempty"`
+	TMSObject
 }
 
 type Group struct {
-	ID           string       `json:"id"`
-	Type         string       `json:"type"`
-	IdentifiedBy []Identifier `json:"identified_by,omitempty"`
+	TMSObject
 }
 
 type HumanMadeObject struct {
-	ID              string             `json:"id"`
-	Type            string             `json:"type"`
-	Label           string             `json:"_label,omitempty"`
-	IdentifiedBy    []Identifier       `json:"identified_by,omitempty"`
-	ClassifiedAs    []Type             `json:"classified_as,omitempty"`
-	ReferredToBy    []LinguisticObject `json:"referred_to_by,omitempty"`
-	CurrentKeeper   []Object           `json:"current_keeper,omitempty"`
-	CurrentOwner    []Object           `json:"current_owner,omitempty"`
-	CurrentLocation Place              `json:"current_location,omitempty"`
-	RawSubjectOf    json.RawMessage    `json:"subject_of",omitempty`
-	SubjectOf       []Object           `json:"-"`
-	Reperesentation []Object           `json:"representation,omitempty"`
+	TMSObject
+	Label           string          `json:"_label,omitempty"`
+	CurrentKeeper   []Object        `json:"current_keeper,omitempty"`
+	CurrentOwner    []Object        `json:"current_owner,omitempty"`
+	CurrentLocation Place           `json:"current_location,omitempty"`
+	RawSubjectOf    json.RawMessage `json:"subject_of",omitempty`
+	SubjectOf       []Object        `json:"-"`
+	Reperesentation []Object        `json:"representation,omitempty"`
 }

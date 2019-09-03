@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"encoding/json"
 	"os"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -61,4 +63,23 @@ func ConvertPythonDateToTime(dateStr string) time.Time {
 		log.WithError(err).Errorf("Unable to parse date: %s", dateStr)
 	}
 	return t
+}
+
+func GetLastPathComponent(url string) string {
+	ss := strings.Split(url, "/")
+	if len(ss) == 0 {
+		return ""
+	}
+	c := ss[len(ss)-1]
+	return c
+}
+
+func ConvertToPrettyJSON(object interface{}) string {
+	jsonb, _ := json.MarshalIndent(object, "", "\t")
+	return string(jsonb)
+}
+
+func ConvertToJSON(object interface{}) string {
+	jsonb, _ := json.Marshal(object)
+	return string(jsonb)
 }

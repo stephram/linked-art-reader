@@ -1,135 +1,121 @@
 package models
 
 import (
-	"reflect"
+	"encoding/json"
+	"linked-art-reader/internal/utils"
 	"strings"
 )
 
-type Entity interface {
-	GetID() string
-	GetDOR_ID() string
-	GetUUID() string
-	GetTMS_ID() string
+type Location struct {
+	ID       string
+	UUID     string
+	Location string
 }
 
-type entityImpl struct {
+// type entityImpl struct {
+type Entity struct {
 	ID              string
+	Type            string
 	UUID            string
 	DOR_ID          string
 	TMS_ID          string
 	AccessionNumber string
 	AltIDs          map[string]string
-	Type            string
 	Title           string
-	Name            string
 	AltLabels       map[string]string
 	Content         interface{}
 	WebURL          string
-	LocationID      string
-	Location        string
+	Location        Location
 	References      map[string]string
 	AltReferences   map[string]string
 }
 
-func New(object interface{}) Entity {
-	entity := &entityImpl{
+func New(object TMSObjectIf, jsonb []byte) *Entity {
+	entity := &Entity{
 		ID:            "",
+		Type:          "",
 		UUID:          "",
 		DOR_ID:        "",
 		TMS_ID:        "",
 		AltIDs:        map[string]string{},
-		Type:          "",
 		Title:         "",
-		Name:          "",
 		AltLabels:     map[string]string{},
 		Content:       nil,
 		WebURL:        "",
-		LocationID:    "",
-		Location:      "",
+		Location:      Location{ID: "", UUID: "", Location: ""},
 		References:    map[string]string{},
 		AltReferences: map[string]string{},
 	}
+	entity.ID = object.GetID()
+	entity.Type = object.GetType()
+	getIDs(object, entity)
+	getNamesAndTitles(object, entity)
+	getReferences(object, entity)
 
-	if _object, ok := object.(*HumanMadeObject); ok {
-		entity.ID = _object.ID
-		entity.Type = reflect.TypeOf(*_object).String()
-		entity.LocationID = _object.CurrentLocation.ID
-		entity.Location = _object.CurrentLocation.Label
-		getIDs(_object, entity)
-		getNamesAndTitles(_object, entity)
-		getReferences(_object, entity)
+	switch entity.Type {
+	case "HumanMadeObject":
+		{
+			var _object HumanMadeObject
+			if err := json.Unmarshal(jsonb, &_object); err != nil {
+				break
+			}
+			entity.Location.ID = _object.CurrentLocation.ID
+			entity.Location.UUID = utils.GetLastPathComponent(_object.CurrentLocation.ID)
+			entity.Location.Location = _object.CurrentLocation.Label
+		}
 	}
 	return entity
 }
 
-func getIDs(object interface{}, entity *entityImpl) {
-	if _object, ok := object.(*HumanMadeObject); ok {
-		for _, identifier := range _object.IdentifiedBy {
-			if identifier.Type == "Identifier" {
-				if strings.Contains(identifier.Label, "(TMS) ID") {
-					(*entity).TMS_ID = identifier.Content
-					continue
-				}
-				if strings.Contains(identifier.Label, "(DOR) ID") {
-					(*entity).DOR_ID = identifier.Content
-					continue
-				}
-				if strings.Contains(identifier.Label, "(DOR) UUID") {
-					(*entity).UUID = identifier.Content
-					continue
-				}
-				if strings.Contains(identifier.Label, "Accession Number") {
-					(*entity).AccessionNumber = identifier.Content
-					continue
-				}
-				(*entity).AltIDs[identifier.Label] = identifier.Content
+func getIDs(object TMSObjectIf, entity *Entity) {
+	setIDs(object, entity)
+}
+
+func setIDs(object TMSObjectIf, entity *Entity) {
+	for _, identifier := range object.GetIdentifiedBy() {
+		if identifier.Type == "Identifier" {
+			if strings.Contains(identifier.Label, "(TMS) ID") {
+				(*entity).TMS_ID = identifier.Content
+			}
+			if strings.Contains(identifier.Label, "(DOR) ID") {
+				(*entity).DOR_ID = identifier.Content
+			}
+			if strings.Contains(identifier.Label, "(DOR) UUID") {
+				(*entity).UUID = identifier.Content
+			}
+			if strings.Contains(identifier.Label, "Accession Number") {
+				(*entity).AccessionNumber = identifier.Content
+			}
+			(*entity).AltIDs[identifier.Label] = identifier.Content
+		}
+	}
+}
+
+func getReferences(object TMSObjectIf, entity *Entity) {
+	for _, reference := range object.GetReferredToBy() {
+		for _, classifier := range reference.ClassifiedAs {
+			if classifier.Label != "Brief Text" {
+				(*entity).AltReferences[classifier.Label] = reference.Content
 			}
 		}
 	}
 }
 
-func getReferences(object interface{}, entity *entityImpl) {
-	if _object, ok := object.(*HumanMadeObject); ok {
-		for _, reference := range _object.ReferredToBy {
-			for _, classifier := range reference.ClassifiedAs {
-				if classifier.Label != "Brief Text" {
-					(*entity).AltReferences[classifier.Label] = reference.Content
-				}
+func getNamesAndTitles(object TMSObjectIf, entity *Entity) {
+	for _, identifier := range object.GetIdentifiedBy() {
+		if identifier.Type == "Name" {
+			if identifier.Label == "" {
+				(*entity).AltIDs[identifier.Type] = identifier.Content
+				continue
 			}
-		}
-	}
-}
-
-func getNamesAndTitles(object interface{}, entity *entityImpl) {
-	if _object, ok := object.(*HumanMadeObject); ok {
-		for _, identifier := range _object.IdentifiedBy {
-			if identifier.Type == "Name" {
-				if identifier.Label == "Primary Title" {
-					(*entity).Title = identifier.Content
-					continue
-				}
-				(*entity).AltLabels[identifier.Label] = identifier.Content
+			if identifier.Label == "Primary Title" {
+				(*entity).Title = identifier.Content
+				continue
 			}
+			(*entity).AltLabels[identifier.Label] = identifier.Content
+			continue
 		}
+		(*entity).AltIDs[identifier.Label] = identifier.Content
 	}
-}
-
-func (e *entityImpl) GetID() string {
-	return e.ID
-}
-
-func (e *entityImpl) GetDOR_ID() string {
-	return e.DOR_ID
-}
-
-func (e *entityImpl) GetTMS_ID() string {
-	return e.TMS_ID
-}
-
-// func (e *entityImpl) GetUID() string {
-// 	return e.UID
-// }
-
-func (e *entityImpl) GetUUID() string {
-	return e.UUID
+	return
 }
