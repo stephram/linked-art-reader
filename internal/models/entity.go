@@ -20,9 +20,9 @@ type Entity struct {
 	DOR_ID          string
 	TMS_ID          string
 	AccessionNumber string
-	AltIDs          map[string]string
+	AltIdentifiers  map[string]string
 	Title           string
-	AltLabels       map[string]string
+	Labels          map[string]string
 	Content         interface{}
 	WebURL          string
 	Location        Location
@@ -32,19 +32,19 @@ type Entity struct {
 
 func New(object TMSObjectIf, jsonb []byte) *Entity {
 	entity := &Entity{
-		ID:            "",
-		Type:          "",
-		UUID:          "",
-		DOR_ID:        "",
-		TMS_ID:        "",
-		AltIDs:        map[string]string{},
-		Title:         "",
-		AltLabels:     map[string]string{},
-		Content:       nil,
-		WebURL:        "",
-		Location:      Location{ID: "", UUID: "", Location: ""},
-		References:    map[string]string{},
-		AltReferences: map[string]string{},
+		ID:             "",
+		Type:           "",
+		UUID:           "",
+		DOR_ID:         "",
+		TMS_ID:         "",
+		AltIdentifiers: map[string]string{},
+		Title:          "",
+		Labels:         map[string]string{},
+		Content:        nil,
+		WebURL:         "",
+		Location:       Location{ID: "", UUID: "", Location: ""},
+		References:     map[string]string{},
+		AltReferences:  map[string]string{},
 	}
 	entity.ID = object.GetID()
 	entity.Type = object.GetType()
@@ -86,7 +86,7 @@ func setIDs(object TMSObjectIf, entity *Entity) {
 			if strings.Contains(identifier.Label, "Accession Number") {
 				(*entity).AccessionNumber = identifier.Content
 			}
-			(*entity).AltIDs[identifier.Label] = identifier.Content
+			(*entity).AltIdentifiers[identifier.Label] = identifier.Content
 		}
 	}
 }
@@ -105,17 +105,17 @@ func getNamesAndTitles(object TMSObjectIf, entity *Entity) {
 	for _, identifier := range object.GetIdentifiedBy() {
 		if identifier.Type == "Name" {
 			if identifier.Label == "" {
-				(*entity).AltIDs[identifier.Type] = identifier.Content
+				(*entity).AltIdentifiers[identifier.Type] = identifier.Content
 				continue
 			}
 			if identifier.Label == "Primary Title" {
 				(*entity).Title = identifier.Content
 				continue
 			}
-			(*entity).AltLabels[identifier.Label] = identifier.Content
+			(*entity).Labels[identifier.Label] = identifier.Content
 			continue
 		}
-		(*entity).AltIDs[identifier.Label] = identifier.Content
+		(*entity).AltIdentifiers[identifier.Label] = identifier.Content
 	}
 	return
 }

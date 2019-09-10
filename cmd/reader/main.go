@@ -101,7 +101,7 @@ func main() {
 					log.WithError(err).Errorf("error storing entity")
 				}
 				if *pretty {
-					fmt.Printf("%s\n", utils.ConvertToPrettyJSON(entity))
+					// fmt.Printf("%s\n", utils.ConvertToPrettyJSON(entity))
 					continue
 				}
 				fmt.Printf("%s\n", utils.ConvertToJSON(entity))

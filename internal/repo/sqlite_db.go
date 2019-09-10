@@ -10,53 +10,54 @@ import (
 )
 
 type DbLocation struct {
-	gorm.Model
-
-	LocationID string `gorm:"type:varchar(256);unique_index"`
-	UUID       string `gorm:"type:varchar(256);unique_index"`
+	LocationID string `gorm:"primary_key"`
+	UUID       string `gorm:"type:varchar(256)"`
 	Location   string `gorm:"type:varchar(256)"`
 }
 
-type DbAltIdentifier struct {
-	IdentifierID string `gorm:"type:varchar(128);unique_index"`
+type DbLabel struct {
+	LabelID string `gorm:"primary_key"`
+	Label   string
+	Value   string
+}
+
+type DbIdentifier struct {
+	IdentifierID string `gorm:"primary_key"`
 	Label        string `gorm:"type:varchar(256)"`
 	Value        string `gorm:"type:varchar(256)"`
 }
 
-type DbAltReference struct {
-	ReferenceID   string `gorm:"type:varchar(256);unique_index"`
-	ReferenceName string `gorm:"type:varchar(256);index"`
+type DbReference struct {
+	ReferenceID    string `gorm:"primary_key"`
+	ReferenceName  string
+	ReferenceValue string
 }
 
 type DbEntity struct {
-	gorm.Model
-
-	EntityID        string `gorm:"type:varchar(256);unique_index"`
-	Type            string `gorm:"type:varchar(128)"`
+	EntityID        string `gorm:"primary_key"`
+	Type            string
 	UUID            string
 	DOR_ID          string
 	TMS_ID          string
-	AccessionNumber string `gorm:"type:varchar(128);index"`
+	AccessionNumber string
 	Title           string
 	Content         string
 	WebURL          string
 
-	// AltLabels       map[string]string
-	AltReferences  []DbAltReference  `gorm:"ForeignKey:ReferenceID"`
-	AltIdentifiers []DbAltIdentifier `gorm:"ForeignKey:IdentifierID"`
+	Labels      []DbLabel      `gorm:"ForeignKey:LabelID"`
+	References  []DbReference  `gorm:"ForeignKey:ReferenceID"`
+	Identifiers []DbIdentifier `gorm:"ForeignKey:IdentifierID"`
+	// Location DbLocation `gorm:"ForeignKey:LocationID"`
 
-	Location DbLocation `gorm:"ForeignKey:LocationID"`
-
-	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt time.Time
 }
 
-type larRepoImpl struct {
+type LinkedArtReaderRepoImpl struct {
 	db *gorm.DB
 }
 
-func (u *larRepoImpl) FindEntity(entityID string) (*models.Entity, error) {
+func (u *LinkedArtReaderRepoImpl) FindEntity(entityID string) (*models.Entity, error) {
 	var dbEntity DbEntity
 
 	query := u.db.Where("id = ?", entityID)
@@ -65,15 +66,13 @@ func (u *larRepoImpl) FindEntity(entityID string) (*models.Entity, error) {
 	return u.toModelEntity(&dbEntity), err
 }
 
-func (u *larRepoImpl) StoreEntity(entity *models.Entity) (*models.Entity, error) {
-
+func (u *LinkedArtReaderRepoImpl) StoreEntity(entity *models.Entity) (*models.Entity, error) {
 	dbEntity := u.toDbEntity(entity)
-
 	err := u.db.Where(DbEntity{EntityID: entity.ID}).Assign(u.toDbEntity(entity)).FirstOrCreate(&dbEntity).Error
 	return u.toModelEntity(dbEntity), err
 }
 
-func (u *larRepoImpl) toModelEntity(dbEntity *DbEntity) *models.Entity {
+func (u *LinkedArtReaderRepoImpl) toModelEntity(dbEntity *DbEntity) *models.Entity {
 	return &models.Entity{
 		ID:              dbEntity.EntityID,
 		UUID:            dbEntity.UUID,
@@ -85,7 +84,7 @@ func (u *larRepoImpl) toModelEntity(dbEntity *DbEntity) *models.Entity {
 	}
 }
 
-func (u *larRepoImpl) toDbEntity(entity *models.Entity) *DbEntity {
+func (u *LinkedArtReaderRepoImpl) toDbEntity(entity *models.Entity) *DbEntity {
 	return &DbEntity{
 		EntityID:        entity.ID,
 		Type:            entity.Type,
@@ -95,29 +94,43 @@ func (u *larRepoImpl) toDbEntity(entity *models.Entity) *DbEntity {
 		TMS_ID:          entity.TMS_ID,
 		Title:           entity.Title,
 		// Content: entity.Content,
-		WebURL:         entity.WebURL,
-		AltReferences:  *(u.makeDbReferences(entity.AltReferences)),
-		AltIdentifiers: *(u.makeDbIdentifiers(entity.AltIDs)),
+		WebURL:      entity.WebURL,
+		Labels:      *(u.makeDbLabels(entity.Labels)),
+		References:  *(u.makeDbReferences(entity.AltReferences)),
+		Identifiers: *(u.makeDbIdentifiers(entity.AltIdentifiers)),
 	}
 }
 
-func (u *larRepoImpl) makeDbReferences(references map[string]string) *[]DbAltReference {
-	refs := []DbAltReference{}
+func (u *LinkedArtReaderRepoImpl) makeDbLabels(labels map[string]string) *[]DbLabel {
+	_labels := []DbLabel{}
+
+	for k, v := range labels {
+		_labels = append(_labels, DbLabel{
+			Label: k,
+			Value: v,
+		})
+	}
+	return &_labels
+}
+
+func (u *LinkedArtReaderRepoImpl) makeDbReferences(references map[string]string) *[]DbReference {
+	refs := []DbReference{}
 
 	for k, v := range references {
-		refs = append(refs, DbAltReference{
-			ReferenceID:   v,
-			ReferenceName: k,
+		refs = append(refs, DbReference{
+			ReferenceID:    v,
+			ReferenceName:  k,
+			ReferenceValue: v,
 		})
 	}
 	return &refs
 }
 
-func (u *larRepoImpl) makeDbIdentifiers(identifiers map[string]string) *[]DbAltIdentifier {
-	ids := []DbAltIdentifier{}
+func (u *LinkedArtReaderRepoImpl) makeDbIdentifiers(identifiers map[string]string) *[]DbIdentifier {
+	ids := []DbIdentifier{}
 
 	for k, v := range identifiers {
-		ids = append(ids, DbAltIdentifier{
+		ids = append(ids, DbIdentifier{
 			IdentifierID: k,
 			Label:        v,
 			Value:        v,
@@ -127,7 +140,7 @@ func (u *larRepoImpl) makeDbIdentifiers(identifiers map[string]string) *[]DbAltI
 }
 
 func New(db *gorm.DB) LinkedArtReaderRepo {
-	larRepo := &larRepoImpl{
+	larRepo := &LinkedArtReaderRepoImpl{
 		db: func() *gorm.DB {
 			if db == nil {
 				return createDB(true)
@@ -148,13 +161,13 @@ func createDB(testMode bool) *gorm.DB {
 		}
 		db.LogMode(true)
 		if testMode {
-			db.AutoMigrate(&DbEntity{})
-			db.AutoMigrate(&DbLocation{})
-			db.AutoMigrate(&DbAltReference{})
-			db.AutoMigrate(&DbAltIdentifier{})
+			// db.DropTableIfExists(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{})
+			db.AutoMigrate(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{})
 
-			db.Model(&DbAltIdentifier{}).AddForeignKey("entity_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
-			db.Model(&DbAltReference{}).AddForeignKey("entity_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
+			db.Model(&DbLocation{}).AddForeignKey("location_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
+			db.Model(&DbIdentifier{}).AddForeignKey("identifier_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
+			db.Model(&DbReference{}).AddForeignKey("reference_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
+			db.Model(&DbLabel{}).AddForeignKey("label_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
 		}
 		db.BlockGlobalUpdate(true)
 
