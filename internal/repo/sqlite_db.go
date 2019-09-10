@@ -1,8 +1,8 @@
 package repo
 
 import (
+	"fmt"
 	"linked-art-reader/internal/models"
-	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -10,30 +10,47 @@ import (
 )
 
 type DbLocation struct {
+	gorm.Model
 	LocationID string `gorm:"primary_key"`
-	UUID       string `gorm:"type:varchar(256)"`
-	Location   string `gorm:"type:varchar(256)"`
+	UUID       string
+	Location   string
+	EntityRef  uint
 }
 
 type DbLabel struct {
-	LabelID string `gorm:"primary_key"`
-	Label   string
-	Value   string
+	gorm.Model
+	LabelID   string `gorm:"primary_key"`
+	Label     string
+	Value     string
+	EntityRef uint
 }
 
 type DbIdentifier struct {
+	gorm.Model
 	IdentifierID string `gorm:"primary_key"`
 	Label        string `gorm:"type:varchar(256)"`
 	Value        string `gorm:"type:varchar(256)"`
+	EntityRef    uint
 }
 
 type DbReference struct {
+	gorm.Model
 	ReferenceID    string `gorm:"primary_key"`
 	ReferenceName  string
 	ReferenceValue string
+	EntityRef      uint
+}
+
+type DbClassifier struct {
+	gorm.Model
+	ClassifierID    string `gorm:"primary_key"`
+	ClassifierName  string
+	ClassifierValue string
+	EntityRef       uint
 }
 
 type DbEntity struct {
+	gorm.Model
 	EntityID        string `gorm:"primary_key"`
 	Type            string
 	UUID            string
@@ -44,13 +61,11 @@ type DbEntity struct {
 	Content         string
 	WebURL          string
 
-	Labels      []DbLabel      `gorm:"ForeignKey:LabelID"`
-	References  []DbReference  `gorm:"ForeignKey:ReferenceID"`
-	Identifiers []DbIdentifier `gorm:"ForeignKey:IdentifierID"`
-	// Location DbLocation `gorm:"ForeignKey:LocationID"`
-
-	UpdatedAt time.Time
-	DeletedAt time.Time
+	Labels      []DbLabel      `gorm:"foreignkey:EntityRef"`
+	References  []DbReference  `gorm:"foreignkey:EntityRef"`
+	Identifiers []DbIdentifier `gorm:"foreignkey:EntityRef"`
+	Classifiers []DbClassifier `gorm:"foreignkey:EntityRef"`
+	Location    DbLocation     `gorm:"foreignkey:EntityRef"`
 }
 
 type LinkedArtReaderRepoImpl struct {
@@ -93,11 +108,21 @@ func (u *LinkedArtReaderRepoImpl) toDbEntity(entity *models.Entity) *DbEntity {
 		AccessionNumber: entity.AccessionNumber,
 		TMS_ID:          entity.TMS_ID,
 		Title:           entity.Title,
-		// Content: entity.Content,
-		WebURL:      entity.WebURL,
-		Labels:      *(u.makeDbLabels(entity.Labels)),
-		References:  *(u.makeDbReferences(entity.AltReferences)),
-		Identifiers: *(u.makeDbIdentifiers(entity.AltIdentifiers)),
+		Content:         fmt.Sprint(entity.Content),
+		WebURL:          entity.WebURL,
+		Labels:          *(u.makeDbLabels(entity.Labels)),
+		References:      *(u.makeDbReferences(entity.AltReferences)),
+		Identifiers:     *(u.makeDbIdentifiers(entity.AltIdentifiers)),
+		Location:        *(u.makeDbLocation(entity.Location)),
+		// Classifiers: *(u.makeDbClassifiers(entity.Classifiersers)),
+	}
+}
+
+func (u *LinkedArtReaderRepoImpl) makeDbLocation(location models.Location) *DbLocation {
+	return &DbLocation{
+		LocationID: location.ID,
+		UUID:       location.UUID,
+		Location:   location.Location,
 	}
 }
 
@@ -118,8 +143,8 @@ func (u *LinkedArtReaderRepoImpl) makeDbReferences(references map[string]string)
 
 	for k, v := range references {
 		refs = append(refs, DbReference{
-			ReferenceID:    v,
-			ReferenceName:  k,
+			ReferenceID:    k,
+			ReferenceName:  v,
 			ReferenceValue: v,
 		})
 	}
@@ -168,22 +193,6 @@ func createDB(testMode bool) *gorm.DB {
 			dbErr = db.AutoMigrate(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}).Error
 			if dbErr != nil {
 				log.Errorf("AutoMigrate failed: %s", dbErr.Error())
-			}
-			dbErr = db.Model(&DbLocation{}).AddForeignKey("location_id", "db_entities(entity_id)", "CASCADE", "CASCADE").Error
-			if dbErr != nil {
-				log.Errorf("AddForeignKey failed: %s", dbErr.Error())
-			}
-			dbErr = db.Model(&DbIdentifier{}).AddForeignKey("identifier_id", "db_entities(entity_id)", "CASCADE", "CASCADE").Error
-			if dbErr != nil {
-				log.Errorf("AddForeignKey failed: %s", dbErr.Error())
-			}
-			dbErr = db.Model(&DbReference{}).AddForeignKey("reference_id", "db_entities(entity_id)", "CASCADE", "CASCADE").Error
-			if dbErr != nil {
-				log.Errorf("AddForeignKey failed: %s", dbErr.Error())
-			}
-			dbErr = db.Model(&DbLabel{}).AddForeignKey("label_id", "db_entities(entity_id)", "CASCADE", "CASCADE").Error
-			if dbErr != nil {
-				log.Errorf("AddForeignKey failed: %s", dbErr.Error())
 			}
 		}
 		db.BlockGlobalUpdate(true)
