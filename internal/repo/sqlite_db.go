@@ -60,7 +60,7 @@ type LinkedArtReaderRepoImpl struct {
 func (u *LinkedArtReaderRepoImpl) FindEntity(entityID string) (*models.Entity, error) {
 	var dbEntity DbEntity
 
-	query := u.db.Where("id = ?", entityID)
+	query := u.db.Where("entity_id = ?", entityID)
 	err := query.Find(&dbEntity).Error
 
 	return u.toModelEntity(&dbEntity), err
@@ -161,13 +161,30 @@ func createDB(testMode bool) *gorm.DB {
 		}
 		db.LogMode(true)
 		if testMode {
-			// db.DropTableIfExists(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{})
-			db.AutoMigrate(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{})
-
-			db.Model(&DbLocation{}).AddForeignKey("location_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
-			db.Model(&DbIdentifier{}).AddForeignKey("identifier_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
-			db.Model(&DbReference{}).AddForeignKey("reference_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
-			db.Model(&DbLabel{}).AddForeignKey("label_id", "db_entities(entity_id)", "CASCADE", "CASCADE")
+			dbErr := db.DropTableIfExists(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}).Error
+			if dbErr != nil {
+				log.Errorf("DropTableIfExists failed: %s", dbErr.Error())
+			}
+			dbErr = db.AutoMigrate(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}).Error
+			if dbErr != nil {
+				log.Errorf("AutoMigrate failed: %s", dbErr.Error())
+			}
+			dbErr = db.Model(&DbLocation{}).AddForeignKey("location_id", "db_entities(entity_id)", "CASCADE", "CASCADE").Error
+			if dbErr != nil {
+				log.Errorf("AddForeignKey failed: %s", dbErr.Error())
+			}
+			dbErr = db.Model(&DbIdentifier{}).AddForeignKey("identifier_id", "db_entities(entity_id)", "CASCADE", "CASCADE").Error
+			if dbErr != nil {
+				log.Errorf("AddForeignKey failed: %s", dbErr.Error())
+			}
+			dbErr = db.Model(&DbReference{}).AddForeignKey("reference_id", "db_entities(entity_id)", "CASCADE", "CASCADE").Error
+			if dbErr != nil {
+				log.Errorf("AddForeignKey failed: %s", dbErr.Error())
+			}
+			dbErr = db.Model(&DbLabel{}).AddForeignKey("label_id", "db_entities(entity_id)", "CASCADE", "CASCADE").Error
+			if dbErr != nil {
+				log.Errorf("AddForeignKey failed: %s", dbErr.Error())
+			}
 		}
 		db.BlockGlobalUpdate(true)
 
