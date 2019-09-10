@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"linked-art-reader/internal/models"
 	activity_stream "linked-art-reader/internal/readers/activity-stream"
+	"linked-art-reader/internal/repo"
 	"linked-art-reader/internal/utils"
 	"net/http"
 	"net/url"
@@ -41,6 +42,12 @@ func main() {
 	asPath = flag.String("path", "activity-stream", "path to the activity stream")
 	asSche = flag.String("scheme", "http", "http(s)")
 	flag.Parse()
+
+	larDB := repo.New(nil)
+	if larDB == nil {
+		log.Errorf("failed to open repository")
+		os.Exit(100)
+	}
 
 	if *enProf {
 		go func() {
@@ -89,6 +96,10 @@ func main() {
 				resolveReferredToBy(&_object.ReferredToBy)
 
 				entity := models.New(_object, _jsonb)
+				_, newErr := larDB.StoreEntity(entity)
+				if newErr != nil {
+					log.WithError(err).Errorf("error storing entity")
+				}
 				if *pretty {
 					fmt.Printf("%s\n", utils.ConvertToPrettyJSON(entity))
 					continue

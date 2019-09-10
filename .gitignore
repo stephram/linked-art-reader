@@ -1,4 +1,8 @@
 vendor
 main
 .idea
+importer
+reader
+build
+*sqlite
 

@@ -52,6 +52,7 @@ func (r *activityStreamReader) GetOrderedCollectionItem(id string) (*models.Orde
 	}
 	return &orderedItem, err
 }
+
 func (r *activityStreamReader) GetTMSObject(id string) (*models.TMSObject, []byte, error) {
 	jsonArr, err := getBytes(id)
 	if err != nil {
