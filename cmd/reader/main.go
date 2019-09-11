@@ -16,6 +16,8 @@ import (
 
 	_ "net/http/pprof"
 
+	"linked-art-reader/pkg/app"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,7 +32,7 @@ var (
 )
 
 func init() {
-	utils.GetLogger()
+	utils.GetLogger().Infof("%+v", app.New())
 }
 
 func main() {
@@ -81,7 +83,7 @@ func main() {
 		orderedCollection, err = streamReader.GetOrderedCollection(url)
 		if err != nil {
 			log.WithError(err).Errorf("error reading orderedCollection '%s'", url)
-			time.Sleep(1)
+			time.Sleep(time.Second * 1)
 			continue
 		}
 		for _, orderedItem := range orderedCollection.OrderedItems {
@@ -92,8 +94,6 @@ func main() {
 					continue
 				}
 				resolveIdentifiedBy(&_object.IdentifiedBy)
-				resolveClassifiedAs(&_object.ClassifiedAs)
-				resolveReferredToBy(&_object.ReferredToBy)
 
 				entity := models.New(_object, _jsonb)
 				_, newErr := larDB.StoreEntity(entity)
@@ -117,7 +117,7 @@ func main() {
 }
 
 func resolveIdentifiedBy(identifiedByArray *[]models.Identifier) {
-	for i, _ := range *identifiedByArray {
+	for i := range *identifiedByArray {
 		_identifiedBy := &(*identifiedByArray)[i]
 
 		switch _identifiedBy.RawContent[0] {
@@ -141,20 +141,6 @@ func resolveIdentifiedBy(identifiedByArray *[]models.Identifier) {
 			}
 		}
 	}
-}
-
-func resolveReferredToBy(referredToByArray *[]models.LinguisticObject) {
-	// for i, _ := range *referredToByArray {
-	// 	_referredToBy := &(*referredToByArray)[i]
-	// resolveClassifiedAs(&_referredToBy.ClassifiedAs)
-	// }
-}
-
-func resolveClassifiedAs(classifiedAsArray *[]models.Type) {
-	// for i, _ := range *classifiedAsArray {
-	// _classifiedAs := &(*classifiedAsArray)[i]
-	// log.Infof("%+v", (*classifiedAsArray)[i])
-	// }
 }
 
 func processPageParams(stPage *int, enPage *int, orderedCollection *models.OrderedCollection) (int, int) {

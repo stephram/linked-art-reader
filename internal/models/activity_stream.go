@@ -30,7 +30,7 @@ type OrderedCollectionPage struct {
 func (p *OrderedCollectionPage) GetID() int {
 	ss := strings.Split(p.ID, "/")
 	if len(ss) == 0 {
-		panic(fmt.Sprint("invalid ID '%s'", p.ID))
+		panic(fmt.Sprintf("invalid ID '%s'", p.ID))
 	}
 	pg := ss[len(ss)-1]
 
@@ -48,7 +48,7 @@ type OrderedItem struct {
 	Object    Object    `json:"object"`
 	Created   time.Time `json:"created"`
 	Updated   time.Time `json:"updated"`
-	Published time.Time `json:"published"'`
+	Published time.Time `json:"published"`
 }
 
 type Object struct {
@@ -141,7 +141,7 @@ type HumanMadeObject struct {
 	CurrentKeeper   []Object        `json:"current_keeper,omitempty"`
 	CurrentOwner    []Object        `json:"current_owner,omitempty"`
 	CurrentLocation Place           `json:"current_location,omitempty"`
-	RawSubjectOf    json.RawMessage `json:"subject_of",omitempty`
+	RawSubjectOf    json.RawMessage `json:"subject_of,omitempty"`
 	SubjectOf       []Object        `json:"-"`
 	Reperesentation []Object        `json:"representation,omitempty"`
 }

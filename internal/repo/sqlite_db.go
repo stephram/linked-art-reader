@@ -3,6 +3,7 @@ package repo
 import (
 	"fmt"
 	"linked-art-reader/internal/models"
+	"os"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -191,8 +192,14 @@ func New(db *gorm.DB) LinkedArtReaderRepo {
 
 func createDB(testMode bool) *gorm.DB {
 	return func() *gorm.DB {
+		dbPath := "./larDB.sqlite"
+		basePath := os.Getenv("BASE_PATH")
+		if basePath != "" {
+			dbPath = basePath + "larDB.sqlite"
+		}
+
 		// db, err := gorm.Open("sqlite3", "file:larDB?mode=memory&cache=shared")
-		db, err := gorm.Open("sqlite3", "./larDB.sqlite")
+		db, err := gorm.Open("sqlite3", dbPath)
 		if err != nil {
 			log.WithError(err).Errorf("unable to open database")
 			return nil

@@ -126,5 +126,4 @@ func getNamesAndTitles(object TMSObjectIf, entity *Entity) {
 		}
 		(*entity).AltIdentifiers[identifier.Label] = identifier.Content
 	}
-	return
 }

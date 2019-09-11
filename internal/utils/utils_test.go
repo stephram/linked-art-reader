@@ -17,3 +17,10 @@ func TestGetLogger(t *testing.T) {
 		assert.NotNil(t, _log)
 	})
 }
+
+func TestUtils(t *testing.T) {
+	t.Run("test fail with empty - convertISODateFormatToDB", func(t *testing.T) {
+		dbDtTm := convertISODateFormatToDB("")
+		assert.NotNil(t, dbDtTm)
+	})
+}
