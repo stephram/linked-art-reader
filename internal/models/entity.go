@@ -20,14 +20,15 @@ type Entity struct {
 	DOR_ID          string
 	TMS_ID          string
 	AccessionNumber string
-	AltIdentifiers  map[string]string
 	Title           string
-	Labels          map[string]string
 	Content         interface{}
 	WebURL          string
 	Location        Location
+	Labels          map[string]string
+	AltIdentifiers  map[string]string
 	References      map[string]string
 	AltReferences   map[string]string
+	Classifiers     map[string]string
 }
 
 func New(object TMSObjectIf, jsonb []byte) *Entity {
@@ -37,20 +38,22 @@ func New(object TMSObjectIf, jsonb []byte) *Entity {
 		UUID:           "",
 		DOR_ID:         "",
 		TMS_ID:         "",
-		AltIdentifiers: map[string]string{},
 		Title:          "",
 		Labels:         map[string]string{},
 		Content:        nil,
 		WebURL:         "",
 		Location:       Location{ID: "", UUID: "", Location: ""},
+		AltIdentifiers: map[string]string{},
 		References:     map[string]string{},
 		AltReferences:  map[string]string{},
+		Classifiers:    map[string]string{},
 	}
 	entity.ID = object.GetID()
 	entity.Type = object.GetType()
 	getIDs(object, entity)
 	getNamesAndTitles(object, entity)
 	getReferences(object, entity)
+	getClassifiers(object, entity)
 
 	switch entity.Type {
 	case "HumanMadeObject":
@@ -88,6 +91,12 @@ func setIDs(object TMSObjectIf, entity *Entity) {
 			}
 			(*entity).AltIdentifiers[identifier.Label] = identifier.Content
 		}
+	}
+}
+
+func getClassifiers(object TMSObjectIf, entity *Entity) {
+	for _, classifier := range object.GetClassifiedAs() {
+		(*entity).Classifiers[classifier.Type] = classifier.Label
 	}
 }
 

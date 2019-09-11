@@ -144,15 +144,16 @@ func resolveIdentifiedBy(identifiedByArray *[]models.Identifier) {
 }
 
 func resolveReferredToBy(referredToByArray *[]models.LinguisticObject) {
-	for i, _ := range *referredToByArray {
-		_referredToBy := &(*referredToByArray)[i]
-		resolveClassifiedAs(&_referredToBy.ClassifiedAs)
-	}
+	// for i, _ := range *referredToByArray {
+	// 	_referredToBy := &(*referredToByArray)[i]
+	// resolveClassifiedAs(&_referredToBy.ClassifiedAs)
+	// }
 }
 
 func resolveClassifiedAs(classifiedAsArray *[]models.Type) {
 	// for i, _ := range *classifiedAsArray {
-	// 	// _classifiedAs := &(*classifiedAsArray)[i]
+	// _classifiedAs := &(*classifiedAsArray)[i]
+	// log.Infof("%+v", (*classifiedAsArray)[i])
 	// }
 }
 

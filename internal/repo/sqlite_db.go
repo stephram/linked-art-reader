@@ -114,7 +114,7 @@ func (u *LinkedArtReaderRepoImpl) toDbEntity(entity *models.Entity) *DbEntity {
 		References:      *(u.makeDbReferences(entity.AltReferences)),
 		Identifiers:     *(u.makeDbIdentifiers(entity.AltIdentifiers)),
 		Location:        *(u.makeDbLocation(entity.Location)),
-		// Classifiers: *(u.makeDbClassifiers(entity.Classifiersers)),
+		Classifiers:     *(u.makeDbClassifiers(entity.Classifiers)),
 	}
 }
 
@@ -124,6 +124,19 @@ func (u *LinkedArtReaderRepoImpl) makeDbLocation(location models.Location) *DbLo
 		UUID:       location.UUID,
 		Location:   location.Location,
 	}
+}
+
+func (u *LinkedArtReaderRepoImpl) makeDbClassifiers(classifiers map[string]string) *[]DbClassifier {
+	_classifiers := []DbClassifier{}
+
+	for k, v := range classifiers {
+		_classifiers = append(_classifiers, DbClassifier{
+			ClassifierID:    k,
+			ClassifierName:  v,
+			ClassifierValue: v,
+		})
+	}
+	return &_classifiers
 }
 
 func (u *LinkedArtReaderRepoImpl) makeDbLabels(labels map[string]string) *[]DbLabel {
@@ -186,11 +199,11 @@ func createDB(testMode bool) *gorm.DB {
 		}
 		db.LogMode(true)
 		if testMode {
-			dbErr := db.DropTableIfExists(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}).Error
+			dbErr := db.DropTableIfExists(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}, &DbClassifier{}).Error
 			if dbErr != nil {
 				log.Errorf("DropTableIfExists failed: %s", dbErr.Error())
 			}
-			dbErr = db.AutoMigrate(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}).Error
+			dbErr = db.AutoMigrate(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}, &DbClassifier{}).Error
 			if dbErr != nil {
 				log.Errorf("AutoMigrate failed: %s", dbErr.Error())
 			}
