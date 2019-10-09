@@ -47,7 +47,7 @@ install:
 	go get -u github.com/alecthomas/template
 
 	# get linter - make sure this version matches our CI tool
-	command -v golangci-lint || go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.16.0
+	command -v golangci-lint || go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.20.0
 
 	go mod download
 

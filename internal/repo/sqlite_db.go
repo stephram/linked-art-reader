@@ -190,12 +190,12 @@ func New(db *gorm.DB) LinkedArtReaderRepo {
 	return larRepo
 }
 
-func createDB(testMode bool) *gorm.DB {
+func createDB(create bool) *gorm.DB {
 	return func() *gorm.DB {
 		dbPath := "./larDB.sqlite"
 		basePath := os.Getenv("BASE_PATH")
 		if basePath != "" {
-			dbPath = basePath + "larDB.sqlite"
+			dbPath = basePath + "/larDB.sqlite"
 		}
 
 		// db, err := gorm.Open("sqlite3", "file:larDB?mode=memory&cache=shared")
@@ -205,7 +205,8 @@ func createDB(testMode bool) *gorm.DB {
 			return nil
 		}
 		db.LogMode(true)
-		if testMode {
+
+		if create {
 			dbErr := db.DropTableIfExists(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}, &DbClassifier{}).Error
 			if dbErr != nil {
 				log.Errorf("DropTableIfExists failed: %s", dbErr.Error())

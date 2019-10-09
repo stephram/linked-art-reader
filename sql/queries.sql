@@ -7,4 +7,4 @@ select distinct * from db_entities as E, db_identifiers as I, db_references as R
         where E.uuid = "3d08f1ba-dcde-4d11-ae41-b7748309105f" 
         and (E.id == I.entity_ref and E.id == R.entity_ref and E.id == C.entity_ref);
         
-select distinct * from db_classifiers where entity_ref == 4572;
+select * from db_classifiers where entity_ref == 4572;
