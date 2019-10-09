@@ -46,7 +46,7 @@ install:
 	go get -u github.com/jroimartin/gocui
 	go get -u github.com/alecthomas/template
 
-	# get linter - make sure this version matches our CI tool
+	# get linter - Use same version as CI build.
 	command -v golangci-lint || go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.20.0
 
 	go mod download
@@ -83,7 +83,7 @@ run-dev: build
 	LOG_FORMAT=text \
 	DB_ENDPOINT=http://localhost:8000 \
 	ENVIRONMENT_NAME=dev \
-	ENVIRONMENT_NUMBER=2 \
+	ENVIRONMENT_NUMBER=1 \
 	DEBUG=true \
 	BASE_PATH=`pwd` \
 		go run $(CMDPATH)
