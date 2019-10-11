@@ -21,7 +21,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	db = createDB(true)
+	db = createDB(true, "testDB.sqlite")
 	defer db.Close()
 
 	larRepo = New(db)

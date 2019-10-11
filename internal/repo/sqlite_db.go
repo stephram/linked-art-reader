@@ -73,6 +73,11 @@ type LinkedArtReaderRepoImpl struct {
 	db *gorm.DB
 }
 
+const (
+	BASE_PATH       = "BASE_PATH"
+	DEFAULT_DB_NAME = "larDB.sqlite"
+)
+
 func (u *LinkedArtReaderRepoImpl) FindEntity(entityID string) (*models.Entity, error) {
 	var dbEntity DbEntity
 
@@ -182,7 +187,7 @@ func New(db *gorm.DB) LinkedArtReaderRepo {
 	larRepo := &LinkedArtReaderRepoImpl{
 		db: func() *gorm.DB {
 			if db == nil {
-				return createDB(true)
+				return createDB(true, "")
 			}
 			return db
 		}(),
@@ -190,12 +195,14 @@ func New(db *gorm.DB) LinkedArtReaderRepo {
 	return larRepo
 }
 
-func createDB(create bool) *gorm.DB {
+func createDB(create bool, dbPath string) *gorm.DB {
 	return func() *gorm.DB {
-		dbPath := "./larDB.sqlite"
-		basePath := os.Getenv("BASE_PATH")
+		if dbPath == "" {
+			dbPath = DEFAULT_DB_NAME
+		}
+		basePath := os.Getenv(BASE_PATH)
 		if basePath != "" {
-			dbPath = basePath + "/larDB.sqlite"
+			dbPath = basePath + "/" + dbPath
 		}
 
 		// db, err := gorm.Open("sqlite3", "file:larDB?mode=memory&cache=shared")
@@ -206,16 +213,19 @@ func createDB(create bool) *gorm.DB {
 		}
 		db.LogMode(true)
 
+		var dbErr error
+
 		if create {
-			dbErr := db.DropTableIfExists(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}, &DbClassifier{}).Error
+			dbErr = db.DropTableIfExists(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}, &DbClassifier{}).Error
 			if dbErr != nil {
 				log.Errorf("DropTableIfExists failed: %s", dbErr.Error())
 			}
-			dbErr = db.AutoMigrate(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}, &DbClassifier{}).Error
-			if dbErr != nil {
-				log.Errorf("AutoMigrate failed: %s", dbErr.Error())
-			}
 		}
+		dbErr = db.AutoMigrate(&DbEntity{}, &DbLocation{}, &DbReference{}, &DbIdentifier{}, &DbLabel{}, &DbClassifier{}).Error
+		if dbErr != nil {
+			log.Errorf("AutoMigrate failed: %s", dbErr.Error())
+		}
+
 		db.BlockGlobalUpdate(true)
 
 		log.Infof("opened sqlite database")

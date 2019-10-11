@@ -57,7 +57,7 @@ compile: info
 	@echo "Running go build...."
 
 	@echo "Building reader"
-	CGO_ENABLED=0  GOARCH=amd64 \
+	CGO_ENABLED=1  GOARCH=amd64 \
 		go build -a \
 		-ldflags='-w -s $(BUILD_OVERRIDES)' \
 		-o $(BUILD_FOLDER)/reader cmd/reader/main.go

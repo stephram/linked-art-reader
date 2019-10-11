@@ -88,9 +88,9 @@ func main() {
 		}
 		for _, orderedItem := range orderedCollection.OrderedItems {
 			if len(orderedItem.Object.ID) > 0 {
-				_object, _jsonb, err := streamReader.GetTMSObject(orderedItem.Object.ID)
-				if err != nil {
-					log.WithError(err).Errorf("error reading '%+v'", orderedItem.Object)
+				_object, _jsonb, oErr := streamReader.GetTMSObject(orderedItem.Object.ID)
+				if oErr != nil {
+					log.WithError(oErr).Errorf("error reading '%+v'", orderedItem.Object)
 					continue
 				}
 				resolveIdentifiedBy(&_object.IdentifiedBy)
